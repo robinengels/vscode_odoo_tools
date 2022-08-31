@@ -1,0 +1,9 @@
+clean_diff
+clean_worktrees
+close_ticket
+done_ticket
+fetchout
+new_ticket
+odoo
+open
+restore_worktrees
