@@ -1,0 +1,37 @@
+#!/bin/bash
+
+branch=$(git branch --show-current 2> /dev/null)
+splitted_branch=(${branch//"-"/ })
+
+dir=$(pwd)
+#split the dir in an array
+dir_array=(${dir//"/"/ })
+#get the last element of the array
+dir_name=${dir_array[${#dir_array[@]} - 1]}
+
+#if the dir_name is "enterprise" then exit
+if [ "$dir_name" == "enterprise" ]; then
+    cd ..
+    if [ -d "odoo" ]; then
+        cd odoo
+    fi
+fi
+
+dir=$(pwd)
+#split the dir in an array
+dir_array=(${dir//"/"/ })
+#get the last element of the array
+dir_name=${dir_array[${#dir_array[@]} - 1]}
+
+#if the dir_name is not "odoo" then exit
+if [ "$dir_name" != "odoo" ]; then
+    #move in the odoo directory if it exists in this folder
+    if [ -d "odoo" ]; then
+        cd odoo
+    else
+        echo "The current directory is not an odoo directory"
+        exit 1
+    fi
+fi
+
+python3 -m debugpy --listen 5678 ./odoo-bin $1 $2 --addons-path="addons/,../enterprise" --limit-time-real=5000 --limit-time-real-cron=0 -d odoo-${splitted_branch[3]}

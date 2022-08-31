@@ -1,0 +1,91 @@
+#!/bin/bash
+remote=$(git remote -v 2> /dev/null)
+if [[ $remote != *"odoo.git"* ]] && [[ $remote != *"enterprise.git"* ]]; then
+  echo "You must be in an Odoo repository"
+  exit 0
+fi
+
+if [[ $remote == *"odoo.git"* ]]; then
+  repo="odoo-dev"
+  module_index=1
+else
+  repo="enterprise-dev"
+  module_index=0
+fi
+
+branch=$(git branch --show-current 2> /dev/null)
+splitted_branch=(${branch//"-"/ })
+
+re='^[0-9]+$'
+ticket_id=${splitted_branch[2]}
+ticket_title=${splitted_branch[3]}
+if ! [[ ${splitted_branch[2]} =~ $re ]]; then
+   if ! [[ ${splitted_branch[3]} =~ $re ]]; then
+    echo "error: Couldn't find ticket id" >&2; exit 1
+   fi
+   ticket_id=${splitted_branch[3]}
+   ticket_title=${splitted_branch[4]}
+fi
+
+push=0
+while getopts "p" flag
+do
+    case "${flag}" in
+        p) push=1;;
+    esac
+done
+
+
+if [[ -z $(git diff 2> /dev/null) ]]; then
+  if [ $push -eq 1 ]; then
+    git commit -a --amend --quiet
+    echo "Pushing to ${repo}"
+    git push $repo HEAD --force
+  fi
+  exit 0
+fi
+
+
+
+module_list=""
+ while read -r line ; do
+    splitted_file_name=(${line//"/"/ })
+    to_add="${splitted_file_name[$module_index]}"
+    echo $to_add
+    module_list+=("$to_add ")
+
+done < <(git diff --name-only)
+
+uniq_modules=($(for module in "${module_list[@]}"; do echo "${module}"; done | sort -u))
+module_list=""
+for module in $uniq_modules; do
+  if [[ -z $module_list ]]; then
+    module_list+="$module"
+  else
+    module_list+=", $module"
+  fi
+done
+
+last_commit=$(git log -1 --pretty=%B)
+if [[ $last_commit != *$ticket_id* ]]; then
+  if [[ -z $push_options ]]; then
+  echo "[FIX] ${module_list}: ${ticket_title}
+
+Current behavior:
+
+Steps to reproduce:
+
+opw-${ticket_id}
+  " | git commit -a -F - &> /dev/null
+  fi
+fi
+
+
+
+git commit -a --amend --quiet
+
+if [ $push -eq 1 ]; then
+  echo "Pushing to ${repo}"
+  git push $repo HEAD --force
+fi
+

@@ -1,0 +1,5 @@
+#!/bin/bash
+IFS=':' read -ra ADDR <<< "$1"
+echo "Fetching ${ADDR[1]} from ${ADDR[0]}..."
+git fetch "${ADDR[0]}" "${ADDR[1]}"
+git checkout "${ADDR[1]}"

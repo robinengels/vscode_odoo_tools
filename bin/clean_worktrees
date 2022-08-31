@@ -1,0 +1,23 @@
+#!/bin/bash
+
+tickets_id=`rpc_get_tickets | tr -d [],`
+
+for i in $(ls ~/src); do
+    splitted_branch=(${i//"-"/ })
+    found=0
+    for ticket in ${tickets_id[@]}; do
+        if [[ $ticket -eq ${splitted_branch[2]} ]] ; then
+            found=1
+        fi
+    done
+    if [[ $found -eq 0 ]] ; then
+        echo "$i not found in your active tickets do you want to delete it ? Y/N"
+        read delete
+        if [[ $delete == "Y" ]] ; then
+            echo "Deleting $i"
+            echo ${splitted_branch[2]}
+            close_ticket ${splitted_branch[2]}
+        fi
+
+    fi
+done

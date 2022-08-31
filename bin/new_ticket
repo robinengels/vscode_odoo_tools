@@ -1,0 +1,31 @@
+#!/bin/bash
+
+FILE_PATH=$(dirname "$0")
+TRIGRAM=$(jq -r '.trigram' ${FILE_PATH}/config.json)
+echo "Trigram found : ${TRIGRAM}"
+
+new_ticket(){
+    VERSION=$1
+    FIX_NAME=$1-opw-$2-$3-$TRIGRAM
+    ODOO_REPO_LOCATION=~/src/main/odoo
+    ENTERPRISE_REPO_LOCATION=~/src/main/enterprise
+
+    echo "Creating worktree for odoo $VERSION ..."
+    git -C $ODOO_REPO_LOCATION worktree add -b $FIX_NAME ~/src/$FIX_NAME/odoo odoo/$VERSION
+
+    echo "Creating worktree for enterprise $VERSION ..."
+    git -C $ENTERPRISE_REPO_LOCATION worktree add -b $FIX_NAME ~/src/$FIX_NAME/enterprise enterprise/$VERSION
+
+    code ~/src/$FIX_NAME/odoo
+}
+
+if [ "$#" -eq 3 ]; then
+    if [ -n "$(ls ~/src | grep $1-opw-$2-)" ]; then
+        echo "This ticket already exist on your computer"
+        exit 1
+    fi
+    new_ticket $1 $2 $3
+else
+    echo "Error : wrong number parameters (new_ticket VERSION_NUMBER TICKET_ID TICKET_TITLE)
+e.g. new_ticket 14.0 2678489 cant_leave_discuss"
+fi

@@ -1,0 +1,49 @@
+#!/bin/bash
+
+FILE_PATH=$(dirname "$0")
+TRIGRAM=$(jq -r '.trigram' ${FILE_PATH}/config.json)
+echo "Trigram found : ${TRIGRAM}"
+
+restore_worktree(){
+    TICKET_ID=$1
+    ODOO_REPO_LOCATION=~/src/main/odoo
+    ENTERPRISE_REPO_LOCATION=~/src/main/enterprise
+    BRANCH_NAME=$(git -C $ODOO_REPO_LOCATION branch -r --list | grep $1)
+    BRANCH_NAME_ENTERPRISE=$(git -C $ODOO_REPO_LOCATION branch -r --list | grep $1)
+
+    splitted_branch=(${BRANCH_NAME//"/"/ })
+    echo $BRANCH_NAME
+    if [[ -z $BRANCH_NAME ]]; then
+        echo "Creating worktree for odoo $VERSION ..."
+        git -C $ODOO_REPO_LOCATION fetch ${splitted_branch[1]}
+        echo "test"
+        echo ${splitted_branch[1]}
+        git -C $ODOO_REPO_LOCATION worktree add ~/src/${splitted_branch[1]}/${splitted_branch[1]}
+        mv ~/src/${splitted_branch[1]}/${splitted_branch[1]} ~/src/${splitted_branch[1]}/odoo
+    else
+        echo "Creating worktree for odoo $VERSION ..."
+        git -C $ODOO_REPO_LOCATION worktree add -B $BRANCH_NAME ~/src/${splitted_branch[1]}/odoo
+    fi
+
+    if [[ -z $BRANCH_NAME_ENTERPRISE ]]; then
+        echo "Creating worktree for enterprise $VERSION ..."
+        git -C $ENTERPRISE_REPO_LOCATION fetch ${splitted_branch[1]}
+        git -C $ENTERPRISE_REPO_LOCATION worktree add ~/src/${splitted_branch[1]}/${splitted_branch[1]}
+        mv ~/src/${splitted_branch[1]}/${splitted_branch[1]} ~/src/${splitted_branch[1]}/enterprise
+    else
+        echo "Creating worktree for enterprise $VERSION ..."
+        git -C $ENTERPRISE_REPO_LOCATION worktree add -B $BRANCH_NAME_ENTERPRISE ~/src/${splitted_branch[1]}/enterprise
+    fi
+
+}
+
+if [ "$#" -eq 1 ]; then
+    if [ -n "$(ls ~/src | grep $1)" ]; then
+        echo "This ticket already exist on your computer"
+        exit 1
+    fi
+    restore_worktree $1
+else
+    echo "Error : wrong number parameters (restore_worktrees TICKET_ID)
+e.g. restore_worktrees 2678489 "
+fi

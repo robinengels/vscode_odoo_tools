@@ -1,0 +1,6 @@
+#!/bin/bash
+
+git diff --name-only -S"debugger" | while read -r line ; do
+    sed '/debugger/d' -i $line
+done
+

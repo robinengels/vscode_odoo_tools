@@ -1,0 +1,24 @@
+#!/bin/bash
+
+close_ticket(){
+    ODOO_REPO_LOCATION=~/src/main/odoo
+    ENTERPRISE_REPO_LOCATION=~/src/main/enterprise
+
+    ticket_file=$(ls ~/src | grep $1)
+    if [[ $ticket_file == "" ]] ; then
+        echo "Ticket $1 not found"
+        exit 1
+    fi
+
+    splitted_branch=(${ticket_file//"-"/ })
+    git -C ~/src/$ticket_file/odoo worktree remove .
+    git -C ~/src/$ticket_file/enterprise worktree remove .
+    echo "Worktree removed "
+    git -C ~/src/main/odoo branch -D $ticket_file
+    git -C ~/src/main/enterprise branch -D $ticket_file
+    rm -r ~/src/$ticket_file
+
+    dropdb odoo-${splitted_branch[3]}
+}
+
+close_ticket $1

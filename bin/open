@@ -1,0 +1,10 @@
+#!/bin/bash
+
+open()
+{
+ name=${PWD##*/}
+ ticket_id=$( echo "$name" | cut -d"-" -f3)
+ xdg-open "https://www.odoo.com/web#id=${ticket_id}&cids=1&menu_id=4720&action=333&active_id=49&model=project.task&view_type=form" &
+}
+
+open
